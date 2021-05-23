@@ -3,16 +3,25 @@
 
 # lib8mosind
 
-This is the python library to control the [8-MOSFETS Solid State Stackable Card for Raspberry Pi](https://sequentmicrosystems.com/collections/all-io-cards/products/raspberry-pi-mosfets-stackable-hat).
+This is the python library to control the [8-MOSFETS V3 Solid State Stackable Card for Raspberry Pi](https://sequentmicrosystems.com/collections/industrial-automation/products/eight-mosfets-v3-br-8-layer-stackable-card-br-for-raspberry-pi).
 
 ## Install
-
+Python 2.x:
 ```bash
 ~$ sudo apt-get update
 ~$ sudo apt-get install build-essential python-pip python-dev python-smbus git
 ~$ git clone https://github.com/SequentMicrosystems/8mosind-rpi.git
 ~$ cd 8mosind-rpi/python/8mosind/
 ~/8mosind-rpi/python/8mosind$ sudo python setup.py install
+```
+
+Python 3.x:
+```bash
+~$ sudo apt-get update
+~$ sudo apt-get install build-essential python3-pip python3-dev python3-smbus git
+~$ git clone https://github.com/SequentMicrosystems/8mosind-rpi.git
+~$ cd 8mosind-rpi/python/8mosind/
+~/8mosind-rpi/python/8mosind$ sudo python3 setup.py install
 ```
 ## Update
 
@@ -23,9 +32,14 @@ This is the python library to control the [8-MOSFETS Solid State Stackable Card 
 ~/8mosind-rpi/python/8mosind$ sudo python setup.py install
 ```
 
+For python 3.x replace the last line with:
+```bash
+~/8mosind-rpi/python/8mosind$ sudo python3 setup.py install
+```
+
 ## Usage 
 
-Now you can import the megaio library and use its functions. To test, read mosfets status from the board with stack level 0:
+Now you can import the lib8mosind library and use its functions. To test, read mosfets status from the board with stack level 0:
 
 ```bash
 ~$ python
