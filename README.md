@@ -34,4 +34,4 @@ If you clone the repository any update can be made with the following commands:
 ```  
 
 ### [Python library](https://github.com/SequentMicrosystems/8mosind-rpi/tree/master/python)
-### [NodeRed](https://github.com/SequentMicrosystems/8mosind-rpi/tree/master/node-red-contrib-sm-8mosind)
+### [Node-RED](https://github.com/SequentMicrosystems/8mosind-rpi/tree/master/node-red-contrib-sm-8mosind)
