@@ -2,7 +2,7 @@
 
 This is the node-red node to control Sequent Microsystems [8-MOSFETS Stackable Card for Raspberry Pi](https://sequentmicrosystems.com/collections/industrial-automation/products/eight-mosfets-v3-br-8-layer-stackable-card-br-for-raspberry-pi).
 
-## Install
+## Manual Install
 
 Clone or update the repository, follow the instrutions fron the [first page.](https://github.com/SequentMicrosystems/8mosind-rpi)
 
@@ -12,7 +12,7 @@ In your node-red user directory, tipicaly ~/.node-red,
 ~$ cd ~/.node-red
 ```
 
-Run the fallowing command:
+Run the following command:
 
 ```bash
 ~/.node-red$ npm install ~/8mosind-rpi/node-red-contrib-sm-8mosind
