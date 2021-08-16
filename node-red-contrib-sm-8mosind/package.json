@@ -26,6 +26,8 @@
     "node-red",
     "node-red-contrib",
     "i2c",
-    "mosfet"
+    "mosfet",
+    "power-switch",
+    "industrial"
   ]
 }
