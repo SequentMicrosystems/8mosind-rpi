@@ -19,7 +19,7 @@
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)0
+#define VERSION_MINOR	(int)1
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	7
@@ -294,8 +294,17 @@ int doBoardInit(int stack)
 	}
 	if (ERROR == i2cMem8Read(dev, MOSFET8_CFG_REG_ADD, buff, 1))
 	{
-		printf("8-MOSFETS card id %d not detected\n", stack);
-		return ERROR;
+		add = (stack + MOSFET8_HW_I2C_ALTERNATE_BASE_ADD) ^ 0x07;
+		dev = i2cSetup(add);
+		if (dev == -1)
+		{
+			return ERROR;
+		}
+		if (ERROR == i2cMem8Read(dev, MOSFET8_CFG_REG_ADD, buff, 1))
+		{
+			printf("8-MOSFETS card id %d not detected\n", stack);
+			return ERROR;
+		}
 	}
 	if (buff[0] != 0) //non initialized I/O Expander
 	{
@@ -559,6 +568,14 @@ static void doList(int argc, char *argv[])
 		{
 			ids[cnt] = i;
 			cnt++;
+		}
+		else
+		{
+			if (boardCheck(MOSFET8_HW_I2C_ALTERNATE_BASE_ADD + i) == OK)
+			{
+				ids[cnt] = i;
+				cnt++;
+			}
 		}
 	}
 	printf("%d board(s) detected\n", cnt);
