@@ -4,7 +4,7 @@
 
 [![8mosind-rpi](readmeres/8-MOS_V3.jpg)](https://www.sequentmicrosystems.com)
 
-This is the command line and python functions to control the [Eight MOSFETS V3 8-Layer Stackable Card for Raspberry Pi](https://sequentmicrosystems.com/collections/industrial-automation/products/eight-mosfets-v3-br-8-layer-stackable-card-br-for-raspberry-pi).
+This is the command line and python functions to control the [Eight MOSFETS V3 8-Layer Stackable Card for Raspberry Pi](https://sequentmicrosystems.com/collections/all-io-cards/products/eight-mosfets-8-layer-stackable-card-for-raspberry-pi).
 For the older hardware version card use this [repository](https://github.com/SequentMicrosystems/8mosfet-rpi) 
 
 First enable I2C communication:
