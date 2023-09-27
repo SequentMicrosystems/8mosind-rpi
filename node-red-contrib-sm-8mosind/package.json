@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-sm-8mosind",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "bundleDependencies": false,
   "dependencies": {
     "i2c-bus": "^5.2.0"
@@ -15,7 +15,7 @@
   "license": "MIT",
   "node-red" : {
     "nodes": {
-        "8relay": "8mosind.js"
+        "8mosind": "8mosind.js"
       }
   },
    "repository": {
