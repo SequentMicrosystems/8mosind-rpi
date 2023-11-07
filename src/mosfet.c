@@ -2,7 +2,7 @@
  * mosfet8.c:
  *	Command-line interface to the Raspberry
  *	Pi's 8-Mosfet board.
- *	Copyright (c) 2016-2020 Sequent Microsystem
+ *	Copyright (c) 2016-2023 Sequent Microsystem
  *	<http://www.sequentmicrosystem.com>
  ***********************************************************************
  *	Author: Alexandru Burcea
@@ -16,118 +16,72 @@
 #include "mosfet.h"
 #include "comm.h"
 #include "thread.h"
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <semaphore.h>
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)1
+#define VERSION_MINOR	(int)2
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	7
 
-const u8 mosfetMaskRemap[8] =
-{
-	0x01,
-	0x02,
-	0x04,
-	0x08,
-	0x10,
-	0x20,
-	0x40,
-	0x80};
-const int mosfetChRemap[8] =
-{
-	0,
-	1,
-	2,
-	3,
-	4,
-	5,
-	6,
-	7};
+#define THREAD_SAFE
 
-
+const u8 mosfetMaskRemap[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+const int mosfetChRemap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 int mosfetChSet(int dev, u8 channel, OutStateEnumType state);
-int mosfetChGet(int dev, u8 channel, OutStateEnumType* state);
+int mosfetChGet(int dev, u8 channel, OutStateEnumType *state);
 u8 mosfetToIO(u8 mosfet);
 u8 IOToMosfet(u8 io);
 
-static void doHelp(int argc, char *argv[]);
+static int doHelp(int argc, char *argv[]);
 const CliCmdType CMD_HELP =
-{
-	"-h",
-	1,
-	&doHelp,
-	"\t-h          Display the list of command options or one command option details\n",
-	"\tUsage:      8mosind -h    Display command options list\n",
-	"\tUsage:      8mosind -h <param>   Display help for <param> command option\n",
-	"\tExample:    8mosind -h write    Display help for \"write\" command option\n"};
+	{"-h", 1, &doHelp,
+		"\t-h          Display the list of command options or one command option details\n",
+		"\tUsage:      8mosind -h    Display command options list\n",
+		"\tUsage:      8mosind -h <param>   Display help for <param> command option\n",
+		"\tExample:    8mosind -h write    Display help for \"write\" command option\n"};
 
-static void doVersion(int argc, char *argv[]);
-const CliCmdType CMD_VERSION =
-{
-	"-v",
-	1,
-	&doVersion,
+static int doVersion(int argc, char *argv[]);
+const CliCmdType CMD_VERSION = {"-v", 1, &doVersion,
 	"\t-v              Display the version number\n",
-	"\tUsage:          8mosind -v\n",
-	"",
+	"\tUsage:          8mosind -v\n", "",
 	"\tExample:        8mosind -v  Display the version number\n"};
 
-static void doWarranty(int argc, char* argv[]);
-const CliCmdType CMD_WAR =
-{
-	"-warranty",
-	1,
-	&doWarranty,
+static int doWarranty(int argc, char *argv[]);
+const CliCmdType CMD_WAR = {"-warranty", 1, &doWarranty,
 	"\t-warranty       Display the warranty\n",
-	"\tUsage:          8mosind -warranty\n",
-	"",
+	"\tUsage:          8mosind -warranty\n", "",
 	"\tExample:        8mosind -warranty  Display the warranty text\n"};
 
-static void doList(int argc, char *argv[]);
+static int doList(int argc, char *argv[]);
 const CliCmdType CMD_LIST =
-{
-	"-list",
-	1,
-	&doList,
-	"\t-list:       List all 8mosind boards connected,\n\treturn       nr of boards and stack level for every board\n",
-	"\tUsage:       8mosind -list\n",
-	"",
-	"\tExample:     8mosind -list display: 1,0 \n"};
+	{"-list", 1, &doList,
+		"\t-list:       List all 8mosind boards connected,\n\treturn       nr of boards and stack level for every board\n",
+		"\tUsage:       8mosind -list\n", "",
+		"\tExample:     8mosind -list display: 1,0 \n"};
 
-static void doMosfetWrite(int argc, char *argv[]);
-const CliCmdType CMD_WRITE =
-{
-	"write",
-	2,
-	&doMosfetWrite,
+static int doMosfetWrite(int argc, char *argv[]);
+const CliCmdType CMD_WRITE = {"write", 2, &doMosfetWrite,
 	"\twrite:       Set mosfets On/Off\n",
 	"\tUsage:       8mosind <id> write <channel> <on/off>\n",
 	"\tUsage:       8mosind <id> write <value>\n",
 	"\tExample:     8mosind 0 write 2 On; Set Mosfet #2 on Board #0 On\n"};
 
-static void doMosfetRead(int argc, char *argv[]);
-const CliCmdType CMD_READ =
-{
-	"read",
-	2,
-	&doMosfetRead,
+static int doMosfetRead(int argc, char *argv[]);
+const CliCmdType CMD_READ = {"read", 2, &doMosfetRead,
 	"\tread:        Read mosfets status\n",
 	"\tUsage:       8mosind <id> read <channel>\n",
 	"\tUsage:       8mosind <id> read\n",
 	"\tExample:     8mosind 0 read 2; Read Status of Mosfet #2 on Board #0\n"};
 
-static void doTest(int argc, char* argv[]);
-const CliCmdType CMD_TEST =
-{
-	"test",
-	2,
-	&doTest,
-	"\ttest:        Turn ON and OFF the mosfets until press a key\n",
-	"",
-	"\tUsage:       8mosind <id> test\n",
-	"\tExample:     8mosind 0 test\n"};
+static int doTest(int argc, char *argv[]);
+const CliCmdType CMD_TEST = {"test", 2, &doTest,
+	"\ttest:        Turn ON and OFF the mosfets until press a key\n", "",
+	"\tUsage:       8mosind <id> test\n", "\tExample:     8mosind 0 test\n"};
 
 CliCmdType gCmdArray[CMD_ARRAY_SIZE];
 
@@ -144,7 +98,7 @@ char *usage = "Usage:	 8mosind -h <command>\n"
 	"Type 8mosind -h <command> for more help"; // No trailing newline needed here.
 
 char *warranty =
-	"	       Copyright (c) 2016-2020 Sequent Microsystems\n"
+	"	       Copyright (c) 2016-2023 Sequent Microsystems\n"
 		"                                                             \n"
 		"		This program is free software; you can redistribute it and/or modify\n"
 		"		it under the terms of the GNU Leser General Public License as published\n"
@@ -219,7 +173,7 @@ int mosfetChSet(int dev, u8 channel, OutStateEnumType state)
 	return resp;
 }
 
-int mosfetChGet(int dev, u8 channel, OutStateEnumType* state)
+int mosfetChGet(int dev, u8 channel, OutStateEnumType *state)
 {
 	u8 buff[2];
 
@@ -259,7 +213,7 @@ int mosfetSet(int dev, int val)
 	return i2cMem8Write(dev, MOSFET8_OUTPORT_REG_ADD, buff, 1);
 }
 
-int mosfetGet(int dev, int* val)
+int mosfetGet(int dev, int *val)
 {
 	u8 buff[2];
 
@@ -281,12 +235,12 @@ int doBoardInit(int stack)
 	int add = 0;
 	uint8_t buff[8];
 
-	if((stack < 0) || (stack > 7))
+	if ( (stack < 0) || (stack > 7))
 	{
 		printf("Invalid stack level [0..7]!");
 		return ERROR;
 	}
-	add = (stack  + MOSFET8_HW_I2C_BASE_ADD) ^ 0x07;
+	add = (stack + MOSFET8_HW_I2C_BASE_ADD) ^ 0x07;
 	dev = i2cSetup(add);
 	if (dev == -1)
 	{
@@ -348,7 +302,7 @@ int boardCheck(int hwAdd)
  *	Write coresponding mosfet channel
  **************************************************************************************
  */
-static void doMosfetWrite(int argc, char *argv[])
+static int doMosfetWrite(int argc, char *argv[])
 {
 	int pin = 0;
 	OutStateEnumType state = STATE_COUNT;
@@ -362,13 +316,13 @@ static void doMosfetWrite(int argc, char *argv[])
 	{
 		printf("Usage: 8mosind <id> write <mosfet number> <on/off> \n");
 		printf("Usage: 8mosind <id> write <mosfet reg value> \n");
-		exit(1);
+		return (FAIL);
 	}
 
 	dev = doBoardInit(atoi(argv[1]));
 	if (dev <= 0)
 	{
-		exit(1);
+		return (FAIL);
 	}
 	if (argc == 5)
 	{
@@ -376,7 +330,7 @@ static void doMosfetWrite(int argc, char *argv[])
 		if ( (pin < CHANNEL_NR_MIN) || (pin > MOSFET_CH_NR_MAX))
 		{
 			printf("Mosfet number value out of range\n");
-			exit(1);
+			return (FAIL);
 		}
 
 		/**/if ( (strcasecmp(argv[4], "up") == 0)
@@ -390,7 +344,7 @@ static void doMosfetWrite(int argc, char *argv[])
 			if ( (atoi(argv[4]) >= STATE_COUNT) || (atoi(argv[4]) < 0))
 			{
 				printf("Invalid mosfet state!\n");
-				exit(1);
+				return (FAIL);
 			}
 			state = (OutStateEnumType)atoi(argv[4]);
 		}
@@ -402,12 +356,12 @@ static void doMosfetWrite(int argc, char *argv[])
 			if (OK != mosfetChSet(dev, pin, state))
 			{
 				printf("Fail to write mosfet\n");
-				exit(1);
+				return (FAIL);
 			}
 			if (OK != mosfetChGet(dev, pin, &stateR))
 			{
 				printf("Fail to read mosfet\n");
-				exit(1);
+				return (FAIL);
 			}
 			retry--;
 		}
@@ -420,7 +374,7 @@ static void doMosfetWrite(int argc, char *argv[])
 		if (retry == 0)
 		{
 			printf("Fail to write mosfet\n");
-			exit(1);
+			return (FAIL);
 		}
 	}
 	else
@@ -429,7 +383,7 @@ static void doMosfetWrite(int argc, char *argv[])
 		if (val < 0 || val > 255)
 		{
 			printf("Invalid mosfet value\n");
-			exit(1);
+			return (FAIL);
 		}
 
 		retry = RETRY_TIMES;
@@ -440,20 +394,21 @@ static void doMosfetWrite(int argc, char *argv[])
 			if (OK != mosfetSet(dev, val))
 			{
 				printf("Fail to write mosfet!\n");
-				exit(1);
+				return (FAIL);
 			}
 			if (OK != mosfetGet(dev, &valR))
 			{
 				printf("Fail to read mosfet!\n");
-				exit(1);
+				return (FAIL);
 			}
 		}
 		if (retry == 0)
 		{
 			printf("Fail to write mosfet!\n");
-			exit(1);
+			return (FAIL);
 		}
 	}
+	return OK;
 }
 
 /*
@@ -461,7 +416,7 @@ static void doMosfetWrite(int argc, char *argv[])
  *	Read mosfet state
  ******************************************************************************************
  */
-static void doMosfetRead(int argc, char *argv[])
+static int doMosfetRead(int argc, char *argv[])
 {
 	int pin = 0;
 	int val = 0;
@@ -471,7 +426,7 @@ static void doMosfetRead(int argc, char *argv[])
 	dev = doBoardInit(atoi(argv[1]));
 	if (dev <= 0)
 	{
-		exit(1);
+		return (FAIL);
 	}
 
 	if (argc == 4)
@@ -480,13 +435,13 @@ static void doMosfetRead(int argc, char *argv[])
 		if ( (pin < CHANNEL_NR_MIN) || (pin > MOSFET_CH_NR_MAX))
 		{
 			printf("Mosfet number value out of range!\n");
-			exit(1);
+			return (FAIL);
 		}
 
 		if (OK != mosfetChGet(dev, pin, &state))
 		{
 			printf("Fail to read!\n");
-			exit(1);
+			return (FAIL);
 		}
 		if (state != 0)
 		{
@@ -502,25 +457,26 @@ static void doMosfetRead(int argc, char *argv[])
 		if (OK != mosfetGet(dev, &val))
 		{
 			printf("Fail to read!\n");
-			exit(1);
+			return (FAIL);
 		}
 		printf("%d\n", val);
 	}
 	else
 	{
 		printf("Usage: %s read mosfet value\n", argv[0]);
-		exit(1);
+		return (FAIL);
 	}
+	return OK;
 }
 
-static void doHelp(int argc, char *argv[])
+static int doHelp(int argc, char *argv[])
 {
 	int i = 0;
 	if (argc == 3)
 	{
 		for (i = 0; i < CMD_ARRAY_SIZE; i++)
 		{
-			if ( (gCmdArray[i].name != NULL ))
+			if ( (gCmdArray[i].name != NULL))
 			{
 				if (strcasecmp(argv[2], gCmdArray[i].name) == 0)
 				{
@@ -540,20 +496,21 @@ static void doHelp(int argc, char *argv[])
 	{
 		printf("%s: %s\n", argv[0], usage);
 	}
+	return OK;
 }
 
-static void doVersion(int argc, char *argv[])
+static int doVersion(int argc, char *argv[])
 {
 	UNUSED(argc);
 	UNUSED(argv);
-	printf("8mosind v%d.%d.%d Copyright (c) 2016 - 2020 Sequent Microsystems\n",
+	printf("8mosind v%d.%d.%d Copyright (c) 2016 - 2023 Sequent Microsystems\n",
 	VERSION_BASE, VERSION_MAJOR, VERSION_MINOR);
 	printf("\nThis is free software with ABSOLUTELY NO WARRANTY.\n");
 	printf("For details type: 8mosind -warranty\n");
-
+	return OK;
 }
 
-static void doList(int argc, char *argv[])
+static int doList(int argc, char *argv[])
 {
 	int ids[8];
 	int i;
@@ -589,12 +546,13 @@ static void doList(int argc, char *argv[])
 		printf(" %d", ids[cnt]);
 	}
 	printf("\n");
+	return OK;
 }
 
 /* 
  * Self test for production
  */
-static void doTest(int argc, char* argv[])
+static int doTest(int argc, char *argv[])
 {
 	int dev = 0;
 	int i = 0;
@@ -602,22 +560,13 @@ static void doTest(int argc, char* argv[])
 	int relVal;
 	int valR;
 	int mosfetResult = 0;
-	FILE* file = NULL;
-	const u8 mosfetOrder[8] =
-	{
-		1,
-		2,
-		3,
-		4,
-		5,
-		6,
-		7,
-		8};
+	FILE *file = NULL;
+	const u8 mosfetOrder[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
 	dev = doBoardInit(atoi(argv[1]));
 	if (dev <= 0)
 	{
-		exit(1);
+		return (FAIL);
 	}
 	if (argc == 4)
 	{
@@ -666,7 +615,7 @@ static void doTest(int argc, char* argv[])
 					printf("Fail to write mosfet\n");
 					if (file)
 						fclose(file);
-					exit(1);
+					return (FAIL);
 				}
 				busyWait(150);
 			}
@@ -697,7 +646,7 @@ static void doTest(int argc, char* argv[])
 					printf("Fail to write mosfet!\n");
 					if (file)
 						fclose(file);
-					exit(1);
+					return (FAIL);
 				}
 				busyWait(150);
 			}
@@ -730,11 +679,13 @@ static void doTest(int argc, char* argv[])
 		fclose(file);
 	}
 	mosfetSet(dev, 0);
+	return OK;
 }
 
-static void doWarranty(int argc UNU, char* argv[] UNU)
+static int doWarranty(int argc UNU, char* argv[] UNU)
 {
 	printf("%s\n", warranty);
+	return OK;
 }
 
 static void cliInit(void)
@@ -762,6 +713,7 @@ static void cliInit(void)
 int main(int argc, char *argv[])
 {
 	int i = 0;
+	int ret = 0;
 
 	cliInit();
 
@@ -770,19 +722,37 @@ int main(int argc, char *argv[])
 		printf("%s\n", usage);
 		return 1;
 	}
+#ifdef THREAD_SAFE
+	sem_t *semaphore = sem_open("/SMI2C_SEM", O_CREAT);
+	int semVal = 2;
+	sem_wait(semaphore);
+#endif
 	for (i = 0; i < CMD_ARRAY_SIZE; i++)
 	{
-		if ( (gCmdArray[i].name != NULL ) && (gCmdArray[i].namePos < argc))
+		if ( (gCmdArray[i].name != NULL) && (gCmdArray[i].namePos < argc))
 		{
 			if (strcasecmp(argv[gCmdArray[i].namePos], gCmdArray[i].name) == 0)
 			{
-				gCmdArray[i].pFunc(argc, argv);
-				return 0;
+				ret = gCmdArray[i].pFunc(argc, argv);
+#ifdef THREAD_SAFE
+				sem_getvalue(semaphore, &semVal);
+				if (semVal < 1)
+				{
+					sem_post(semaphore);
+				}
+#endif
+				return ret;
 			}
 		}
 	}
 	printf("Invalid command option\n");
 	printf("%s\n", usage);
-
-	return 0;
+#ifdef THREAD_SAFE
+	sem_getvalue(semaphore, &semVal);
+	if (semVal < 1)
+	{
+		sem_post(semaphore);
+	}
+#endif
+	return -1;
 }

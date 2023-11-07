@@ -32,7 +32,7 @@ typedef struct
 {
  const char* name;
  const int namePos;
- void(*pFunc)(int, char**);
+ int(*pFunc)(int, char**);
  const char* help;
  const char* usage1;
  const char* usage2;
