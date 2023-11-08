@@ -35,7 +35,7 @@ install: 8mosind
 	$Q echo "[Install]"
 	$Q cp 8mosind		$(DESTDIR)$(PREFIX)/bin
 ifneq ($(WIRINGPI_SUID),0)
-	$Q chown root.root	$(DESTDIR)$(PREFIX)/bin/8mosind
+	$Q chown root:root	$(DESTDIR)$(PREFIX)/bin/8mosind
 	$Q chmod 4755		$(DESTDIR)$(PREFIX)/bin/8mosind
 endif
 #	$Q mkdir -p		$(DESTDIR)$(PREFIX)/man/man1
