@@ -22,7 +22,7 @@
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)2
+#define VERSION_MINOR	(int)3
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	7
@@ -729,10 +729,15 @@ int main(int argc, char *argv[])
 #ifdef DEBUG_SEM
 	sem_getvalue(semaphore, &semVal);
 	printf("Semaphore before wait %d\n", semVal);
+	semVal = 2;
 #endif
-	if(-1 == sem_wait(semaphore))
+	while (semVal > 0)
 	{
-		printf("fail to wait for the semaphore\n");
+		if(-1 == sem_wait(semaphore))
+		{
+			printf("fail to wait for the semaphore\n");
+		}
+		sem_getvalue(semaphore, &semVal);
 	}
 #ifdef DEBUG_SEM
 	sem_getvalue(semaphore, &semVal);
