@@ -28,6 +28,7 @@
 #define CMD_ARRAY_SIZE	7
 
 #define THREAD_SAFE
+#define DEBUG_SEM
 
 const u8 mosfetMaskRemap[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 const int mosfetChRemap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -725,7 +726,18 @@ int main(int argc, char *argv[])
 #ifdef THREAD_SAFE
 	sem_t *semaphore = sem_open("/SMI2C_SEM", O_CREAT);
 	int semVal = 2;
-	sem_wait(semaphore);
+#ifdef DEBUG_SEM
+	sem_getvalue(semaphore, &semVal);
+	printf("Semaphore before wait %d\n", semVal);
+#endif
+	if(-1 == sem_wait(semaphore))
+	{
+		printf("fail to wait for the semaphore\n");
+	}
+#ifdef DEBUG_SEM
+	sem_getvalue(semaphore, &semVal);
+	printf("Semaphore after wait %d\n", semVal);
+#endif
 #endif
 	for (i = 0; i < CMD_ARRAY_SIZE; i++)
 	{
@@ -738,8 +750,15 @@ int main(int argc, char *argv[])
 				sem_getvalue(semaphore, &semVal);
 				if (semVal < 1)
 				{
-					sem_post(semaphore);
+					 if (sem_post(semaphore) == -1)
+					 {
+						 printf("Fail to post SMI2C_SEM \n");
+					 }
 				}
+#ifdef DEBUG_SEM
+				sem_getvalue(semaphore, &semVal);
+				printf("Semaphore after post %d\n", semVal);
+#endif
 #endif
 				return ret;
 			}
@@ -751,8 +770,15 @@ int main(int argc, char *argv[])
 	sem_getvalue(semaphore, &semVal);
 	if (semVal < 1)
 	{
-		sem_post(semaphore);
+		 if (sem_post(semaphore) == -1)
+			 {
+				 printf("Fail to post SMI2C_SEM \n");
+			 }
 	}
+#ifdef DEBUG_SEM
+	sem_getvalue(semaphore, &semVal);
+	printf("Semaphore after post %d\n", semVal);
+#endif
 #endif
 	return -1;
 }
