@@ -19,16 +19,19 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <semaphore.h>
+#include <time.h>
+#include <errno.h>
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)3
+#define VERSION_MINOR	(int)4
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	7
 
 #define THREAD_SAFE
-#define DEBUG_SEM
+//#define DEBUG_SEM
+#define TIMEOUT_S 3
 
 const u8 mosfetMaskRemap[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 const int mosfetChRemap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -711,13 +714,62 @@ static void cliInit(void)
 
 }
 
+int waitForI2C(sem_t *sem)
+{
+  int semVal = 2;
+  struct timespec ts;
+  int s = 0;
+  
+#ifdef DEBUG_SEM
+	sem_getvalue(sem, &semVal);
+	printf("Semaphore initial value %d\n", semVal);
+	semVal = 2;
+#endif
+	while (semVal > 0)
+	{
+    if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
+    {
+        /* handle error */
+        printf("Fail to read time \n");
+        return -1;
+    }
+    ts.tv_sec += TIMEOUT_S;
+    while ((s = sem_timedwait(sem, &ts)) == -1 && errno == EINTR)
+               continue;       /* Restart if interrupted by handler */
+		sem_getvalue(sem, &semVal);
+	}
+#ifdef DEBUG_SEM
+	sem_getvalue(sem, &semVal);
+	printf("Semaphore after wait %d\n", semVal);
+#endif
+  return 0;
+}
+
+int releaseI2C(sem_t *sem)
+{
+  int semVal = 2;
+  sem_getvalue(sem, &semVal);
+	if (semVal < 1)
+	{
+		 if (sem_post(sem) == -1)
+		 {
+			 printf("Fail to post SMI2C_SEM \n");
+       return -1;
+		 }
+	}
+#ifdef DEBUG_SEM
+	sem_getvalue(sem, &semVal);
+	printf("Semaphore after post %d\n", semVal);
+#endif
+return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int i = 0;
 	int ret = 0;
 
 	cliInit();
-
 	if (argc == 1)
 	{
 		printf("%s\n", usage);
@@ -725,24 +777,7 @@ int main(int argc, char *argv[])
 	}
 #ifdef THREAD_SAFE
 	sem_t *semaphore = sem_open("/SMI2C_SEM", O_CREAT, 0000666, 3);
-	int semVal = 2;
-#ifdef DEBUG_SEM
-	sem_getvalue(semaphore, &semVal);
-	printf("Semaphore before wait %d\n", semVal);
-	semVal = 2;
-#endif
-	while (semVal > 0)
-	{
-		if(-1 == sem_wait(semaphore))
-		{
-			printf("fail to wait for the semaphore\n");
-		}
-		sem_getvalue(semaphore, &semVal);
-	}
-#ifdef DEBUG_SEM
-	sem_getvalue(semaphore, &semVal);
-	printf("Semaphore after wait %d\n", semVal);
-#endif
+	waitForI2C(semaphore);
 #endif
 	for (i = 0; i < CMD_ARRAY_SIZE; i++)
 	{
@@ -752,18 +787,7 @@ int main(int argc, char *argv[])
 			{
 				ret = gCmdArray[i].pFunc(argc, argv);
 #ifdef THREAD_SAFE
-				sem_getvalue(semaphore, &semVal);
-				if (semVal < 1)
-				{
-					 if (sem_post(semaphore) == -1)
-					 {
-						 printf("Fail to post SMI2C_SEM \n");
-					 }
-				}
-#ifdef DEBUG_SEM
-				sem_getvalue(semaphore, &semVal);
-				printf("Semaphore after post %d\n", semVal);
-#endif
+			 releaseI2C(semaphore);
 #endif
 				return ret;
 			}
@@ -772,18 +796,7 @@ int main(int argc, char *argv[])
 	printf("Invalid command option\n");
 	printf("%s\n", usage);
 #ifdef THREAD_SAFE
-	sem_getvalue(semaphore, &semVal);
-	if (semVal < 1)
-	{
-		 if (sem_post(semaphore) == -1)
-			 {
-				 printf("Fail to post SMI2C_SEM \n");
-			 }
-	}
-#ifdef DEBUG_SEM
-	sem_getvalue(semaphore, &semVal);
-	printf("Semaphore after post %d\n", semVal);
-#endif
+  releaseI2C(semaphore);
 #endif
 	return -1;
 }
