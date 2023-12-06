@@ -1,6 +1,6 @@
-import smbus
+import smbus2
 
-# bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+# bus = smbus2.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
 
 DEVICE_ADDRESS = 0x38  # 7 bit address (will be left shifted to add the read write bit)
 ALTERNATE_DEVICE_ADDRESS = 0x20  # 7 bit address (will be left shifted to add the read write bit)
@@ -76,7 +76,7 @@ def set(stack, mosfet, value):
     if mosfet > 8:
         raise ValueError('Invalid mosfet number')
     try:
-        bus = smbus.SMBus(1)
+        bus = smbus2.SMBus(1)
         oldVal = check_a(bus, stack)
         oldVal = IOToMosfet(oldVal)
         if value == 0:
@@ -98,7 +98,7 @@ def set_all(stack, value):
         raise ValueError('Invalid mosfet value')
     if value < 0:
         raise ValueError('Invalid mosfet value')
-    bus = smbus.SMBus(1)
+    bus = smbus2.SMBus(1)
     oldVal = check_a(bus, stack)
     value = mosfetToIO(value)
     try:
@@ -114,7 +114,7 @@ def get(stack, mosfet):
         raise ValueError('Invalid mosfet number')
     if mosfet > 8:
         raise ValueError('Invalid mosfet number')
-    bus = smbus.SMBus(1)
+    bus = smbus2.SMBus(1)
     val = check_a(bus, stack)
     val = IOToMosfet(val)
     val = val & (1 << (mosfet - 1))
@@ -126,7 +126,7 @@ def get(stack, mosfet):
 
 
 def get_all(stack):
-    bus = smbus.SMBus(1)
+    bus = smbus2.SMBus(1)
     val = check_a(bus, stack)
     val = IOToMosfet(val)
     bus.close()
