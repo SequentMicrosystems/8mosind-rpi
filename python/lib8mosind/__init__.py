@@ -9,6 +9,8 @@ MOSFET8_OUTPORT_REG_ADD = 0x01
 MOSFET8_POLINV_REG_ADD = 0x02
 MOSFET8_CFG_REG_ADD = 0x03
 
+MOSFET8_MEM_PWM1 = 0x07
+
 mosfetMaskRemap = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80]
 mosfetChRemap = [0, 1, 2, 3, 4, 5, 6, 7]
 
@@ -28,14 +30,6 @@ def IOToMosfet(iov):
         if (iov & mosfetMaskRemap[i]) != 0:
             val = val + (1 << i)
     return val
-
-
-def check(bus, add):
-    cfg = bus.read_byte_data(add, MOSFET8_CFG_REG_ADD)
-    if cfg != 0:
-        bus.write_byte_data(add, MOSFET8_CFG_REG_ADD, 0)
-        bus.write_byte_data(add, MOSFET8_OUTPORT_REG_ADD, 0xff)
-    return bus.read_byte_data(add, MOSFET8_INPORT_REG_ADD)
 
 
 def check(bus, add):
@@ -69,6 +63,15 @@ def writeOutput(bus, val):
     global devAdd
     bus.write_byte_data(devAdd, MOSFET8_OUTPORT_REG_ADD, val)
 
+def getWord(bus, hwAdd, add):
+    retry = 0
+    try:
+        buff = bus.read_i2c_block_data(hwAdd, add, 2)
+        val = bytearray(buff)[0] + 256 * bytearray(buff)[1]
+    except Exception as e:
+        bus.close()
+        raise Exception("Fail to read with exception " + str(e))
+    return val
 
 def set(stack, mosfet, value):
     if mosfet < 1:
@@ -92,6 +95,38 @@ def set(stack, mosfet, value):
         raise ValueError('8-mosfets card not detected!')
     bus.close()
 
+def set_pwm(stack, mosfet, value):
+    if mosfet < 1:
+        raise ValueError('Invalid mosfet number')
+    if mosfet > 8:
+        raise ValueError('Invalid mosfet number')
+    if value > 100:
+        value = 100;
+    if value < 0:
+        value = 0
+    try:
+        bus = smbus2.SMBus(1)
+        check_a(bus, stack)
+        bus.write_word_data(devAdd, MOSFET8_MEM_PWM1 + (2 * (mosfet - 1)), int(value * 10))
+    except Exception as e:
+        bus.close()
+        raise ValueError('8-mosfets card not detected or does not support PWM feature!')
+    bus.close()
+
+def get_pwm(stack, mosfet):
+    if mosfet < 1:
+        raise ValueError('Invalid mosfet number')
+    if mosfet > 8:
+        raise ValueError('Invalid mosfet number')
+    try:
+        bus = smbus2.SMBus(1)
+        check_a(bus, stack)
+        val = getWord(bus, devAdd, MOSFET8_MEM_PWM1 + (2 * (mosfet - 1)))
+    except Exception as e:
+        bus.close()
+        raise ValueError('8-mosfets card not detected or does not support PWM feature!')
+    bus.close()
+    return val/10
 
 def set_all(stack, value):
     if value > 255:

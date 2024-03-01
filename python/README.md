@@ -60,3 +60,21 @@ Return the state of all mosfets.
 stack - stack level of the 8-Relay card (selectable from address jumpers [0..7])
 
 return - [0..255]
+
+### set_pwm(stack, mosfet, value)
+Set one mosfet pwm fill factor.
+
+stack - stack level of the 8-Relay card (selectable from address jumpers [0..7])
+
+mosfet - mosfet number (id) [1..8]
+
+value - pwm fill factor [0..100]
+
+### get_pwm(stack, mosfet)
+Get one mosfet pwm fill factor.
+
+stack - stack level of the 8-Relay card (selectable from address jumpers [0..7])
+
+mosfet - mosfet number (id) [1..8]
+
+return [0..100]

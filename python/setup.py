@@ -6,7 +6,7 @@
 
 # For release
 #twine upload dist/*
-#pip install multiio
+#pip install SM8mosind
 
 
 #with open("README.md", 'r') as f:
@@ -16,7 +16,7 @@ from setuptools import setup, find_packages
 setup(
     name='SM8mosind',
     packages=find_packages(),
-    version='1.0.0',
+    version='1.0.1',
     license='MIT',
     description='Library to control 8mosind Automation Card',
     #long_description=long_description,
