@@ -24,7 +24,7 @@
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)4
+#define VERSION_MINOR	(int)5
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	7
@@ -82,6 +82,21 @@ const CliCmdType CMD_READ = {"read", 2, &doMosfetRead,
 	"\tUsage:       8mosind <id> read\n",
 	"\tExample:     8mosind 0 read 2; Read Status of Mosfet #2 on Board #0\n"};
 
+static int doMosfetPWMWrite(int argc, char *argv[]);
+const CliCmdType CMD_PWM_WRITE = {"pwmwr", 2, &doMosfetPWMWrite,
+	"\tpwmwr:       Set one mosfet pwm fill facor\n",
+	"\tUsage:       8mosind <id> pwmwr <channel> <0..100>\n",
+	"",
+	"\tExample:     8mosind 0 pwmwr 2 45; Set Mosfet #2 on Board #0 pwm fill factor to 45%\n"};
+
+static int doMosfetPWMRead(int argc, char *argv[]);
+const CliCmdType CMD_PWM_READ = {"pwmrd", 2, &doMosfetPWMRead,
+	"\tpwmrd:       Read one channel pwm fill factor\n",
+	"\tUsage:       8mosind <id> pwmrd <channel>\n",
+	"",
+	"\tExample:     8mosind 0 pwmrd 2; Read pwm fill factor of Mosfet #2 on Board #0\n"};
+
+
 static int doTest(int argc, char *argv[]);
 const CliCmdType CMD_TEST = {"test", 2, &doTest,
 	"\ttest:        Turn ON and OFF the mosfets until press a key\n", "",
@@ -97,6 +112,8 @@ char *usage = "Usage:	 8mosind -h <command>\n"
 	"         8mosind <id> write <value>\n"
 	"         8mosind <id> read <channel>\n"
 	"         8mosind <id> read\n"
+	"         8mosind <id> pwmwr <channel> <0..100>\n"
+	"         8mosind <id> pwmrd <channel>\n"
 	"         8mosind <id> test\n"
 	"Where: <id> = Board level id = 0..7\n"
 	"Type 8mosind -h <command> for more help"; // No trailing newline needed here.
@@ -177,6 +194,30 @@ int mosfetChSet(int dev, u8 channel, OutStateEnumType state)
 	return resp;
 }
 
+int mosfetChSetPwm(int dev, u8 channel, float value)
+{
+	u8 buff[2];
+	uint16_t raw = 0;
+
+	if ( (channel < CHANNEL_NR_MIN) || (channel > MOSFET_CH_NR_MAX))
+	{
+		printf("Invalid mosfet nr!\n");
+		return ERROR;
+	}
+	if(value > 100)
+	{
+		value = 100;
+	}
+	if(value < 0)
+	{
+		value = 0;
+	}
+	raw = (uint16_t)(value * 10);
+	memcpy(buff, &raw, 2);
+	return i2cMem8Write(dev, I2C_MEM_PWM1 + PWM_SIZE_B * (channel -1), buff, 2);
+
+}
+
 int mosfetChGet(int dev, u8 channel, OutStateEnumType *state)
 {
 	u8 buff[2];
@@ -205,6 +246,34 @@ int mosfetChGet(int dev, u8 channel, OutStateEnumType *state)
 	{
 		*state = ON;
 	}
+	return OK;
+}
+
+
+int mosfetChGetPwm(int dev, u8 channel, float *value)
+{
+	u8 buff[2];
+	uint16_t raw = 0;
+
+	if (NULL == value)
+	{
+		return ERROR;
+	}
+
+	if ( (channel < CHANNEL_NR_MIN) || (channel > MOSFET_CH_NR_MAX))
+	{
+		printf("Invalid mosfet nr!\n");
+		return ERROR;
+	}
+
+	if (FAIL == i2cMem8Read(dev, I2C_MEM_PWM1 + PWM_SIZE_B * (channel -1), buff, 2))
+	{
+		return ERROR;
+	}
+	memcpy(&raw, buff, 2);
+
+	*value = (float)raw / 10;
+
 	return OK;
 }
 
@@ -415,6 +484,74 @@ static int doMosfetWrite(int argc, char *argv[])
 	return OK;
 }
 
+
+/*
+ * doMosfetPWMWrite:
+ *	Write coresponding mosfet channel
+ **************************************************************************************
+ */
+static int doMosfetPWMWrite(int argc, char *argv[])
+{
+	int pin = 0;
+	int dev = 0;
+	int retry = 0;
+
+	float pwm = 0;
+	float pwmR = 101;
+
+	if (argc != 5)
+	{
+		printf("Usage: 8mosind <id> pwmwr <mosfet number> <0..100> \n");
+		return (FAIL);
+	}
+
+	dev = doBoardInit(atoi(argv[1]));
+	if (dev <= 0)
+	{
+		return (FAIL);
+	}
+	if (argc == 5)
+	{
+		pin = atoi(argv[3]);
+		if ( (pin < CHANNEL_NR_MIN) || (pin > MOSFET_CH_NR_MAX))
+		{
+			printf("Mosfet number value out of range\n");
+			return (FAIL);
+		}
+
+		pwm = atof(argv[4]);
+
+		retry = RETRY_TIMES;
+
+		while ( (retry > 0) && (pwmR != pwm))
+		{
+			if (OK != mosfetChSetPwm(dev, pin, pwm))
+			{
+				printf("Fail to write mosfet or not PWM capable board\n");
+				return (FAIL);
+			}
+			if (OK != mosfetChGetPwm(dev, pin, &pwmR))
+			{
+				printf("Fail to read mosfet\n");
+				return (FAIL);
+			}
+			retry--;
+		}
+#ifdef DEBUG_I
+		if(retry < RETRY_TIMES)
+		{
+			printf("retry %d times\n", 3-retry);
+		}
+#endif
+		if (retry == 0)
+		{
+			printf("Fail to write mosfet\n");
+			return (FAIL);
+		}
+	}
+	return OK;
+}
+
 /*
  * doMosfetRead:
  *	Read mosfet state
@@ -464,6 +601,51 @@ static int doMosfetRead(int argc, char *argv[])
 			return (FAIL);
 		}
 		printf("%d\n", val);
+	}
+	else
+	{
+		printf("Usage: %s read mosfet value\n", argv[0]);
+		return (FAIL);
+	}
+	return OK;
+}
+
+
+
+/*
+ * doMosfetPWMRead:
+ *	Read mosfet state
+ ******************************************************************************************
+ */
+static int doMosfetPWMRead(int argc, char *argv[])
+{
+	int pin = 0;
+	float val = 0;
+	int dev = 0;
+
+
+	dev = doBoardInit(atoi(argv[1]));
+	if (dev <= 0)
+	{
+		return (FAIL);
+	}
+
+	if (argc == 4)
+	{
+		pin = atoi(argv[3]);
+		if ( (pin < CHANNEL_NR_MIN) || (pin > MOSFET_CH_NR_MAX))
+		{
+			printf("Mosfet number value out of range!\n");
+			return (FAIL);
+		}
+
+		if (OK != mosfetChGetPwm(dev, pin, &val))
+		{
+			printf("Fail to read!\n");
+			return (FAIL);
+		}
+
+			printf("%.01f\n", val);
 	}
 	else
 	{
@@ -707,6 +889,10 @@ static void cliInit(void)
 	memcpy(&gCmdArray[i], &CMD_WRITE, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_READ, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_PWM_WRITE, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_PWM_READ, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_TEST, sizeof(CliCmdType));
 	i++;
