@@ -24,10 +24,10 @@
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)5
+#define VERSION_MINOR	(int)6
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
-#define CMD_ARRAY_SIZE	7
+#define CMD_ARRAY_SIZE	16
 
 #define THREAD_SAFE
 //#define DEBUG_SEM
