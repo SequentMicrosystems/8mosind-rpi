@@ -27,11 +27,14 @@
 #define VERSION_MINOR	(int)6
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
-#define CMD_ARRAY_SIZE	16
+#define CMD_ARRAY_SIZE	18
 
 #define THREAD_SAFE
 //#define DEBUG_SEM
 #define TIMEOUT_S 3
+
+#define MOS_MIN_FREQ 16
+#define MOS_MAX_FREQ 1000
 
 const u8 mosfetMaskRemap[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 const int mosfetChRemap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -97,6 +100,20 @@ const CliCmdType CMD_PWM_READ = {"pwmrd", 2, &doMosfetPWMRead,
 	"\tUsage:       8mosind <id> pwmrd <channel>\n",
 	"",
 	"\tExample:     8mosind 0 pwmrd 2; Read pwm fill factor of Mosfet #2 on Board #0\n"};
+
+static int doMosfetFreqWr(int argc, char *argv[]);
+const CliCmdType CMD_F_WRITE =
+	{"fwr", 2, &doMosfetFreqWr, "\tfwr:         Write pwm frequency in Hz\n",
+		"\tUsage:       8mosind <id> fwr <frequency [16..1000]>\n", "",
+		"\tExample:     8mosind 0 fwr 200; Set pwm frequency at 200Hz for all mosfets on Board #0\n"};
+
+static int doMosfetFreqRd(int argc, char *argv[]);
+const CliCmdType CMD_F_READ =
+	{"frd", 2, &doMosfetFreqRd,
+		"\tfrd:         Read pwm frequency in Hz\n",
+		"\tUsage:       8mosind <id> frd\n", "",
+		"\tExample:     8mosind 0 frd; Read pwm frequency for all mosfets on Board #0\n"};
+
 
 
 static int doTest(int argc, char *argv[]);
@@ -328,6 +345,40 @@ int mosfetGet(int dev, int *val)
 	return OK;
 }
 
+
+int mosfetSetFrequency(int dev, int val)
+{
+	u8 buff[2];
+	uint16_t raw = 0;
+
+	if (val < MOS_MIN_FREQ || val > MOS_MAX_FREQ)
+	{
+		printf("Frequency out of range [%d..%d]\n", MOS_MIN_FREQ, MOS_MAX_FREQ);
+		return ERROR;
+	}
+	raw = (uint16_t)val;
+	memcpy(buff, &raw, 2);
+	return i2cMem8Write(dev, I2C_PWM_FREQ, buff, 2);
+}
+
+int mosfetGetFrequency(int dev, int *val)
+{
+	u8 buff[2];
+	uint16_t raw = 0;
+
+	if (NULL == val)
+	{
+		return ERROR;
+	}
+	if (FAIL == i2cMem8Read(dev, I2C_PWM_FREQ, buff, 2))
+	{
+		return ERROR;
+	}
+	memcpy(&raw, buff, 2);
+	*val = raw;
+
+	return OK;
+}
 
 int cfg485Set(int dev, u8 mode, u32 baud, u8 stopB, u8 parity, u8 add)
 {
@@ -745,6 +796,64 @@ static int doMosfetPWMRead(int argc, char *argv[])
 	return OK;
 }
 
+static int doMosfetFreqWr(int argc, char *argv[])
+{
+	int freq = 0;
+	int dev = 0;
+
+	dev = doBoardInit(atoi(argv[1]));
+	if (dev <= 0)
+	{
+		return (FAIL);
+	}
+
+	if (argc == 4)
+	{
+		freq = atoi(argv[3]);
+
+		if (OK != mosfetSetFrequency(dev, freq))
+		{
+			printf("Fail to set the frequency!");
+			return FAIL;
+		}
+	}
+	else
+	{
+		printf("Usage: %s set pwm frequency\n", argv[0]);
+		return (FAIL);
+	}
+	return OK;
+}
+
+
+static int doMosfetFreqRd(int argc, char *argv[])
+{
+	int freq = 0;
+	int dev = 0;
+
+	dev = doBoardInit(atoi(argv[1]));
+	if (dev <= 0)
+	{
+		return (FAIL);
+	}
+
+	if (argc == 3)
+	{
+		if (OK != mosfetGetFrequency(dev, &freq))
+		{
+			printf("Fail to read the frequency!");
+			return FAIL;
+		}
+		printf("%d\n", freq);
+	}
+	else
+	{
+		printf("Usage: %s get pwm frequency\n", argv[0]);
+		return (FAIL);
+	}
+	return OK;
+}
+
 static int doHelp(int argc, char *argv[])
 {
 	int i = 0;
@@ -1042,6 +1151,10 @@ static void cliInit(void)
 	memcpy(&gCmdArray[i], &CMD_PWM_WRITE, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_PWM_READ, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_F_WRITE, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_F_READ, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_TEST, sizeof(CliCmdType));
 	i++;
