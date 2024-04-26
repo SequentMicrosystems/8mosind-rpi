@@ -24,7 +24,7 @@
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)6
+#define VERSION_MINOR	(int)7
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	18
@@ -155,6 +155,8 @@ char *usage = "Usage:	 8mosind -h <command>\n"
 	"         8mosind <id> read\n"
 	"         8mosind <id> pwmwr <channel> <0..100>\n"
 	"         8mosind <id> pwmrd <channel>\n"
+	"			 8mosind <id> fwr <[16..1000]>\n"
+	"         8mosind <id> frd\n"
 	"         8mosind <id> test\n"
 	"         8mosind <id> cfg485wr <mode> <baudrate> <stopBits> <parity> <slaveAddr>\n"
 	"         8mosind <id> cfg485rd\n"
