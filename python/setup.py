@@ -9,18 +9,18 @@
 #pip install SM8mosind
 
 
-#with open("README.md", 'r') as f:
-#    long_description = f.read()
+with open("README.md", 'r') as f:
+    long_description = f.read()
 
 from setuptools import setup, find_packages
 setup(
-    name='SM8mosind',
+    name='sm8mosind',
     packages=find_packages(),
-    version='1.0.1',
+    version='1.0.2',
     license='MIT',
     description='Library to control 8mosind Automation Card',
-    #long_description=long_description,
-    #long_description_content_type="text/markdown",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author='Sequent Microsystems',
     author_email='olcitu@gmail.com',
     url='https://sequentmicrosystems.com',
