@@ -25,7 +25,7 @@
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)1
-#define VERSION_MINOR	(int)0
+#define VERSION_MINOR	(int)1
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	32
@@ -37,8 +37,10 @@
 #define MOS_MIN_FREQ 16
 #define MOS_MAX_FREQ 1000
 
-const u8 mosfetMaskRemap[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
-const int mosfetChRemap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+const u8 mosfetMaskRemap[8] =
+	{0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+const int mosfetChRemap[8] =
+	{0, 1, 2, 3, 4, 5, 6, 7};
 
 int mosfetChSet(int dev, u8 channel, OutStateEnumType state);
 int mosfetChGet(int dev, u8 channel, OutStateEnumType *state);
@@ -49,131 +51,130 @@ int cfg485Get(int dev);
 
 static int doHelp(int argc, char *argv[]);
 const CliCmdType CMD_HELP =
-	{"-h", 1, &doHelp,
-		"\t-h          Display the list of command options or one command option details\n",
-		"\tUsage:      8mosind -h    Display command options list\n",
-		"\tUsage:      8mosind -h <param>   Display help for <param> command option\n",
-		"\tExample:    8mosind -h write    Display help for \"write\" command option\n"};
+		{"-h", 1, &doHelp,
+			"\t-h          Display the list of command options or one command option details\n",
+			"\tUsage:      8mosind -h    Display command options list\n",
+			"\tUsage:      8mosind -h <param>   Display help for <param> command option\n",
+			"\tExample:    8mosind -h write    Display help for \"write\" command option\n"};
 
 static int doVersion(int argc, char *argv[]);
-const CliCmdType CMD_VERSION = {"-v", 1, &doVersion,
-	"\t-v              Display the version number\n",
-	"\tUsage:          8mosind -v\n", "",
-	"\tExample:        8mosind -v  Display the version number\n"};
+const CliCmdType CMD_VERSION =
+	{"-v", 1, &doVersion, "\t-v              Display the version number\n",
+		"\tUsage:          8mosind -v\n", "",
+		"\tExample:        8mosind -v  Display the version number\n"};
 
 static int doWarranty(int argc, char *argv[]);
-const CliCmdType CMD_WAR = {"-warranty", 1, &doWarranty,
-	"\t-warranty       Display the warranty\n",
-	"\tUsage:          8mosind -warranty\n", "",
-	"\tExample:        8mosind -warranty  Display the warranty text\n"};
+const CliCmdType CMD_WAR =
+	{"-warranty", 1, &doWarranty, "\t-warranty       Display the warranty\n",
+		"\tUsage:          8mosind -warranty\n", "",
+		"\tExample:        8mosind -warranty  Display the warranty text\n"};
 
 static int doList(int argc, char *argv[]);
 const CliCmdType CMD_LIST =
-	{"-list", 1, &doList,
-		"\t-list:       List all 8mosind boards connected,\n\treturn       nr of boards and stack level for every board\n",
-		"\tUsage:       8mosind -list\n", "",
-		"\tExample:     8mosind -list display: 1,0 \n"};
+		{"-list", 1, &doList,
+			"\t-list:       List all 8mosind boards connected,\n\treturn       nr of boards and stack level for every board\n",
+			"\tUsage:       8mosind -list\n", "",
+			"\tExample:     8mosind -list display: 1,0 \n"};
 
 static int doMosfetWrite(int argc, char *argv[]);
-const CliCmdType CMD_WRITE = {"write", 2, &doMosfetWrite,
-	"\twrite:       Set mosfets On/Off\n",
-	"\tUsage:       8mosind <id> write <channel> <on/off>\n",
-	"\tUsage:       8mosind <id> write <value>\n",
-	"\tExample:     8mosind 0 write 2 On; Set Mosfet #2 on Board #0 On\n"};
+const CliCmdType CMD_WRITE =
+	{"write", 2, &doMosfetWrite, "\twrite:       Set mosfets On/Off\n",
+		"\tUsage:       8mosind <id> write <channel> <on/off>\n",
+		"\tUsage:       8mosind <id> write <value>\n",
+		"\tExample:     8mosind 0 write 2 On; Set Mosfet #2 on Board #0 On\n"};
 
 static int doMosfetRead(int argc, char *argv[]);
-const CliCmdType CMD_READ = {"read", 2, &doMosfetRead,
-	"\tread:        Read mosfets status\n",
-	"\tUsage:       8mosind <id> read <channel>\n",
-	"\tUsage:       8mosind <id> read\n",
-	"\tExample:     8mosind 0 read 2; Read Status of Mosfet #2 on Board #0\n"};
+const CliCmdType CMD_READ =
+	{"read", 2, &doMosfetRead, "\tread:        Read mosfets status\n",
+		"\tUsage:       8mosind <id> read <channel>\n",
+		"\tUsage:       8mosind <id> read\n",
+		"\tExample:     8mosind 0 read 2; Read Status of Mosfet #2 on Board #0\n"};
 
 static int doMosfetPWMWrite(int argc, char *argv[]);
-const CliCmdType CMD_PWM_WRITE = {"pwmwr", 2, &doMosfetPWMWrite,
-	"\tpwmwr:       Set one mosfet pwm fill facor\n",
-	"\tUsage:       8mosind <id> pwmwr <channel> <0..100>\n",
-	"",
-	"\tExample:     8mosind 0 pwmwr 2 45; Set Mosfet #2 on Board #0 pwm fill factor to 45%\n"};
+const CliCmdType CMD_PWM_WRITE =
+		{"pwmwr", 2, &doMosfetPWMWrite,
+			"\tpwmwr:       Set one mosfet pwm fill facor\n",
+			"\tUsage:       8mosind <id> pwmwr <channel> <0..100>\n", "",
+			"\tExample:     8mosind 0 pwmwr 2 45; Set Mosfet #2 on Board #0 pwm fill factor to 45%\n"};
 
 static int doMosfetPWMRead(int argc, char *argv[]);
-const CliCmdType CMD_PWM_READ = {"pwmrd", 2, &doMosfetPWMRead,
-	"\tpwmrd:       Read one channel pwm fill factor\n",
-	"\tUsage:       8mosind <id> pwmrd <channel>\n",
-	"",
-	"\tExample:     8mosind 0 pwmrd 2; Read pwm fill factor of Mosfet #2 on Board #0\n"};
+const CliCmdType CMD_PWM_READ =
+		{"pwmrd", 2, &doMosfetPWMRead,
+			"\tpwmrd:       Read one channel pwm fill factor\n",
+			"\tUsage:       8mosind <id> pwmrd <channel>\n", "",
+			"\tExample:     8mosind 0 pwmrd 2; Read pwm fill factor of Mosfet #2 on Board #0\n"};
 
 static int doMosfetFreqWr(int argc, char *argv[]);
 const CliCmdType CMD_F_WRITE =
-	{"fwr", 2, &doMosfetFreqWr, "\tfwr:         Write pwm frequency in Hz\n",
-		"\tUsage:       8mosind <id> fwr <frequency [16..1000]>\n", "",
-		"\tExample:     8mosind 0 fwr 200; Set pwm frequency at 200Hz for all mosfets on Board #0\n"};
+		{"fwr", 2, &doMosfetFreqWr, "\tfwr:         Write pwm frequency in Hz\n",
+			"\tUsage:       8mosind <id> fwr <frequency [16..1000]>\n", "",
+			"\tExample:     8mosind 0 fwr 200; Set pwm frequency at 200Hz for all mosfets on Board #0\n"};
 
 static int doMosfetFreqRd(int argc, char *argv[]);
 const CliCmdType CMD_F_READ =
-	{"frd", 2, &doMosfetFreqRd,
-		"\tfrd:         Read pwm frequency in Hz\n",
-		"\tUsage:       8mosind <id> frd\n", "",
-		"\tExample:     8mosind 0 frd; Read pwm frequency for all mosfets on Board #0\n"};
-
-
+		{"frd", 2, &doMosfetFreqRd, "\tfrd:         Read pwm frequency in Hz\n",
+			"\tUsage:       8mosind <id> frd\n", "",
+			"\tExample:     8mosind 0 frd; Read pwm frequency for all mosfets on Board #0\n"};
 
 static int doTest(int argc, char *argv[]);
-const CliCmdType CMD_TEST = {"test", 2, &doTest,
-	"\ttest:        Turn ON and OFF the mosfets until press a key\n", "",
-	"\tUsage:       8mosind <id> test\n", "\tExample:     8mosind 0 test\n"};
+const CliCmdType CMD_TEST =
+	{"test", 2, &doTest,
+		"\ttest:        Turn ON and OFF the mosfets until press a key\n", "",
+		"\tUsage:       8mosind <id> test\n", "\tExample:     8mosind 0 test\n"};
+
+static int doBoard(int argc, char *argv[]);
+const CliCmdType CMD_BOARD =
+	{"board", 2, &doBoard,
+		"\tboard:        Display board firmware version and status\n", "",
+		"\tUsage:       8mosind <id> board\n", "\tExample:     8mosind 0 board\n"};
 
 int doRs485Write(int argc, char *argv[]);
 const CliCmdType CMD_RS485_WRITE =
-	{
-		"cfg485wr",
-		2,
-		&doRs485Write,
-		"\tcfg485wr:    Write the RS485 communication settings\n",
-		"\tUsage:      8mosind <id> cfg485wr <mode> <baudrate> <stopBits> <parity> <slaveAddr>\n",
-		"",
-		"\tExample:		 8mosind 0 cfg485wr 1 9600 1 0 1; Write the RS485 settings on Board #0 \n\t\t\t(mode = Modbus RTU; baudrate = 9600 bps; stop bits one; parity none; modbus slave address = 1)\n"};
+		{"cfg485wr", 2, &doRs485Write,
+			"\tcfg485wr:    Write the RS485 communication settings\n",
+			"\tUsage:      8mosind <id> cfg485wr <mode> <baudrate> <stopBits> <parity> <slaveAddr>\n",
+			"",
+			"\tExample:		 8mosind 0 cfg485wr 1 9600 1 0 1; Write the RS485 settings on Board #0 \n\t\t\t(mode = Modbus RTU; baudrate = 9600 bps; stop bits one; parity none; modbus slave address = 1)\n"};
 
 int doRs485Read(int argc, char *argv[]);
 const CliCmdType CMD_RS485_READ =
-{
-	"cfg485rd",
-	2,
-	&doRs485Read,
-	"\tcfg485rd:    Read the RS485 communication settings\n",
-	"\tUsage:      8mosind <id> cfg485rd\n",
-	"",
-	"\tExample:		8mosind 0 cfg485rd; Read the RS485 settings on Board #0\n"};
+	{"cfg485rd", 2, &doRs485Read,
+		"\tcfg485rd:    Read the RS485 communication settings\n",
+		"\tUsage:      8mosind <id> cfg485rd\n", "",
+		"\tExample:		8mosind 0 cfg485rd; Read the RS485 settings on Board #0\n"};
 
 CliCmdType gCmdArray[CMD_ARRAY_SIZE];
 
-char *usage = "Usage:	 8mosind -h <command>\n"
-	"         8mosind -v\n"
-	"         8mosind -warranty\n"
-	"         8mosind -list\n"
-	"         8mosind <id> write <channel> <on/off>\n"
-	"         8mosind <id> write <value>\n"
-	"         8mosind <id> read <channel>\n"
-	"         8mosind <id> read\n"
-	"         8mosind <id> pwmwr <channel> <0..100>\n"
-	"         8mosind <id> pwmrd <channel>\n"
-	"         8mosind <id> fwr <[16..1000]>\n"
-	"         8mosind <id> frd\n"
-	"         8mosind <id> test\n"
-	"         8mosind <id> cfg485wr <mode> <baudrate> <stopBits> <parity> <slaveAddr>\n"
-	"         8mosind <id> cfg485rd\n"
-	"         8mosind <id> wdtr\n"
-	"         8mosind <id> wdtprd\n"
-	"         8mosind <id> wdtpwr <val>\n"
-	"         8mosind <id> wdtipwr <val>\n"
-	"         8mosind <id> wdtiprd\n"
-	"         8mosind <id> wdtoprd\n"
-	"         8mosind <id> wdtopwr <val>\n"
-	"         8mosind <id> wdtrcrd\n"
-	"         8mosind <id> wdtrcclr\n"
-	"         8mosind <id> vrasprd\n"
-	"         8mosind <id> temprd\n"
-	"Where: <id> = Board level id = 0..7\n"
-	"Type 8mosind -h <command> for more help"; // No trailing newline needed here.
+char *usage =
+	"Usage:	 8mosind -h <command>\n"
+		"         8mosind -v\n"
+		"         8mosind -warranty\n"
+		"         8mosind -list\n"
+		"         8mosind <id> board\n"
+		"         8mosind <id> write <channel> <on/off>\n"
+		"         8mosind <id> write <value>\n"
+		"         8mosind <id> read <channel>\n"
+		"         8mosind <id> read\n"
+		"         8mosind <id> pwmwr <channel> <0..100>\n"
+		"         8mosind <id> pwmrd <channel>\n"
+		"         8mosind <id> fwr <[16..1000]>\n"
+		"         8mosind <id> frd\n"
+		"         8mosind <id> test\n"
+		"         8mosind <id> cfg485wr <mode> <baudrate> <stopBits> <parity> <slaveAddr>\n"
+		"         8mosind <id> cfg485rd\n"
+		"         8mosind <id> wdtr\n"
+		"         8mosind <id> wdtprd\n"
+		"         8mosind <id> wdtpwr <val>\n"
+		"         8mosind <id> wdtipwr <val>\n"
+		"         8mosind <id> wdtiprd\n"
+		"         8mosind <id> wdtoprd\n"
+		"         8mosind <id> wdtopwr <val>\n"
+		"         8mosind <id> wdtrcrd\n"
+		"         8mosind <id> wdtrcclr\n"
+		"         8mosind <id> vrasprd\n"
+		"         8mosind <id> temprd\n"
+		"Where: <id> = Board level id = 0..7\n"
+		"Type 8mosind -h <command> for more help"; // No trailing newline needed here.
 
 char *warranty =
 	"	       Copyright (c) 2016-2023 Sequent Microsystems\n"
@@ -261,17 +262,17 @@ int mosfetChSetPwm(int dev, u8 channel, float value)
 		printf("Invalid mosfet nr!\n");
 		return ERROR;
 	}
-	if(value > 100)
+	if (value > 100)
 	{
 		value = 100;
 	}
-	if(value < 0)
+	if (value < 0)
 	{
 		value = 0;
 	}
-	raw = (uint16_t)(value * 10);
+	raw = (uint16_t) (value * 10);
 	memcpy(buff, &raw, 2);
-	return i2cMem8Write(dev, I2C_MEM_PWM1 + PWM_SIZE_B * (channel -1), buff, 2);
+	return i2cMem8Write(dev, I2C_MEM_PWM1 + PWM_SIZE_B * (channel - 1), buff, 2);
 
 }
 
@@ -306,7 +307,6 @@ int mosfetChGet(int dev, u8 channel, OutStateEnumType *state)
 	return OK;
 }
 
-
 int mosfetChGetPwm(int dev, u8 channel, float *value)
 {
 	u8 buff[2];
@@ -323,7 +323,8 @@ int mosfetChGetPwm(int dev, u8 channel, float *value)
 		return ERROR;
 	}
 
-	if (FAIL == i2cMem8Read(dev, I2C_MEM_PWM1 + PWM_SIZE_B * (channel -1), buff, 2))
+	if (FAIL
+		== i2cMem8Read(dev, I2C_MEM_PWM1 + PWM_SIZE_B * (channel - 1), buff, 2))
 	{
 		return ERROR;
 	}
@@ -358,7 +359,6 @@ int mosfetGet(int dev, int *val)
 	*val = IOToMosfet(buff[0]);
 	return OK;
 }
-
 
 int mosfetSetFrequency(int dev, int val)
 {
@@ -454,8 +454,6 @@ int cfg485Get(int dev)
 		(int)settings.mbParity, (int)settings.add);
 	return OK;
 }
-
-
 
 int doBoardInit(int stack)
 {
@@ -639,7 +637,6 @@ static int doMosfetWrite(int argc, char *argv[])
 	return OK;
 }
 
-
 /*
  * doMosfetPWMWrite:
  *	Write coresponding mosfet channel
@@ -765,8 +762,6 @@ static int doMosfetRead(int argc, char *argv[])
 	return OK;
 }
 
-
-
 /*
  * doMosfetPWMRead:
  *	Read mosfet state
@@ -777,7 +772,6 @@ static int doMosfetPWMRead(int argc, char *argv[])
 	int pin = 0;
 	float val = 0;
 	int dev = 0;
-
 
 	dev = doBoardInit(atoi(argv[1]));
 	if (dev <= 0)
@@ -800,7 +794,7 @@ static int doMosfetPWMRead(int argc, char *argv[])
 			return (FAIL);
 		}
 
-			printf("%.01f\n", val);
+		printf("%.01f\n", val);
 	}
 	else
 	{
@@ -838,7 +832,6 @@ static int doMosfetFreqWr(int argc, char *argv[])
 	}
 	return OK;
 }
-
 
 static int doMosfetFreqRd(int argc, char *argv[])
 {
@@ -948,6 +941,40 @@ static int doList(int argc, char *argv[])
 	return OK;
 }
 
+/***********************************************************************************************************************/
+static int doBoard(int argc, char *argv[])
+{
+	int dev = 0;
+	u8 buff[3];
+	u8 revMin = 0;
+	u8 revMaj = 0;
+	UNUSED(argc);
+
+
+	dev = doBoardInit(atoi(argv[1]));
+	if (dev <= 0)
+	{
+		return (FAIL);
+	}
+	if (OK != i2cMem8Read(dev, I2C_MEM_REVISION_MAJOR_ADD, buff, 2))
+	{
+		printf("Fail to read!\n");
+		return ERROR;
+	}
+	revMaj = buff[0];
+	revMin = buff[1];
+	if (OK != i2cMem8Read(dev, I2C_MEM_DIAG_3V3_MV_ADD, buff, 3))
+	{
+		printf("Fail to read!\n");
+		return ERROR;
+	}
+	printf(
+		"8Mosfets card found firmware version %d.%02d CPU voltage %0.3fV temperature %d'C\n",
+		(int)revMaj, (int)revMin,
+		(int) ((int) ( (buff[1] << 8) | buff[0])) / 1000.0, (int)buff[2]);
+	return OK;
+}
+
 /* 
  * Self test for production
  */
@@ -960,7 +987,8 @@ static int doTest(int argc, char *argv[])
 	int valR;
 	int mosfetResult = 0;
 	FILE *file = NULL;
-	const u8 mosfetOrder[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+	const u8 mosfetOrder[8] =
+		{1, 2, 3, 4, 5, 6, 7, 8};
 
 	dev = doBoardInit(atoi(argv[1]));
 	if (dev <= 0)
@@ -1145,7 +1173,6 @@ int doRs485Write(int argc, char *argv[])
 	return OK;
 }
 
-
 static void cliInit(void)
 {
 	int i = 0;
@@ -1157,6 +1184,8 @@ static void cliInit(void)
 	memcpy(&gCmdArray[i], &CMD_WAR, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_LIST, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_BOARD, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_WRITE, sizeof(CliCmdType));
 	i++;
@@ -1203,10 +1232,10 @@ static void cliInit(void)
 
 int waitForI2C(sem_t *sem)
 {
-  int semVal = 2;
-  struct timespec ts;
-  int s = 0;
-  
+	int semVal = 2;
+	struct timespec ts;
+	int s = 0;
+
 #ifdef DEBUG_SEM
 	sem_getvalue(sem, &semVal);
 	printf("Semaphore initial value %d\n", semVal);
@@ -1214,41 +1243,41 @@ int waitForI2C(sem_t *sem)
 #endif
 	while (semVal > 0)
 	{
-    if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
-    {
-        /* handle error */
-        printf("Fail to read time \n");
-        return -1;
-    }
-    ts.tv_sec += TIMEOUT_S;
-    while ((s = sem_timedwait(sem, &ts)) == -1 && errno == EINTR)
-               continue;       /* Restart if interrupted by handler */
+		if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
+		{
+			/* handle error */
+			printf("Fail to read time \n");
+			return -1;
+		}
+		ts.tv_sec += TIMEOUT_S;
+		while ( (s = sem_timedwait(sem, &ts)) == -1 && errno == EINTR)
+			continue; /* Restart if interrupted by handler */
 		sem_getvalue(sem, &semVal);
 	}
 #ifdef DEBUG_SEM
 	sem_getvalue(sem, &semVal);
 	printf("Semaphore after wait %d\n", semVal);
 #endif
-  return 0;
+	return 0;
 }
 
 int releaseI2C(sem_t *sem)
 {
-  int semVal = 2;
-  sem_getvalue(sem, &semVal);
+	int semVal = 2;
+	sem_getvalue(sem, &semVal);
 	if (semVal < 1)
 	{
-		 if (sem_post(sem) == -1)
-		 {
-			 printf("Fail to post SMI2C_SEM \n");
-       return -1;
-		 }
+		if (sem_post(sem) == -1)
+		{
+			printf("Fail to post SMI2C_SEM \n");
+			return -1;
+		}
 	}
 #ifdef DEBUG_SEM
 	sem_getvalue(sem, &semVal);
 	printf("Semaphore after post %d\n", semVal);
 #endif
-return 0;
+	return 0;
 }
 
 int main(int argc, char *argv[])
@@ -1274,7 +1303,7 @@ int main(int argc, char *argv[])
 			{
 				ret = gCmdArray[i].pFunc(argc, argv);
 #ifdef THREAD_SAFE
-			 releaseI2C(semaphore);
+				releaseI2C(semaphore);
 #endif
 				return ret;
 			}
@@ -1283,7 +1312,7 @@ int main(int argc, char *argv[])
 	printf("Invalid command option\n");
 	printf("%s\n", usage);
 #ifdef THREAD_SAFE
-  releaseI2C(semaphore);
+	releaseI2C(semaphore);
 #endif
 	return -1;
 }
