@@ -16,6 +16,7 @@
 #include "mosfet.h"
 #include "comm.h"
 #include "thread.h"
+#include "wdt.h"
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <semaphore.h>
@@ -23,11 +24,11 @@
 #include <errno.h>
 
 #define VERSION_BASE	(int)1
-#define VERSION_MAJOR	(int)0
-#define VERSION_MINOR	(int)7
+#define VERSION_MAJOR	(int)1
+#define VERSION_MINOR	(int)0
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
-#define CMD_ARRAY_SIZE	18
+#define CMD_ARRAY_SIZE	32
 
 #define THREAD_SAFE
 //#define DEBUG_SEM
@@ -160,6 +161,17 @@ char *usage = "Usage:	 8mosind -h <command>\n"
 	"         8mosind <id> test\n"
 	"         8mosind <id> cfg485wr <mode> <baudrate> <stopBits> <parity> <slaveAddr>\n"
 	"         8mosind <id> cfg485rd\n"
+	"         8mosind <id> wdtr\n"
+	"         8mosind <id> wdtprd\n"
+	"         8mosind <id> wdtpwr <val>\n"
+	"         8mosind <id> wdtipwr <val>\n"
+	"         8mosind <id> wdtiprd\n"
+	"         8mosind <id> wdtoprd\n"
+	"         8mosind <id> wdtopwr <val>\n"
+	"         8mosind <id> wdtrcrd\n"
+	"         8mosind <id> wdtrcclr\n"
+	"         8mosind <id> vrasprd\n"
+	"         8mosind <id> temprd\n"
 	"Where: <id> = Board level id = 0..7\n"
 	"Type 8mosind -h <command> for more help"; // No trailing newline needed here.
 
@@ -1165,7 +1177,28 @@ static void cliInit(void)
 	memcpy(&gCmdArray[i], &CMD_RS485_WRITE, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_RS485_READ, sizeof(CliCmdType));
-
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_RELOAD, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_SET_PERIOD, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_GET_PERIOD, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_SET_INIT_PERIOD, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_GET_INIT_PERIOD, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_SET_OFF_PERIOD, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_GET_OFF_PERIOD, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_GET_RESET_COUNT, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_WDT_CLR_RESET_COUNT, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_RASP_VOLT_READ, sizeof(CliCmdType));
+	i++;
+	memcpy(&gCmdArray[i], &CMD_TEMP_READ, sizeof(CliCmdType));
 }
 
 int waitForI2C(sem_t *sem)
