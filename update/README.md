@@ -10,10 +10,11 @@ cd 8mosind-rpi/update/
 ./update 0
 ```
 
-If you clone the repository already, skip the first step. 
-The command will download the newest firmware version from our server and write it  to the board.
-The stack level of the board must be provided as a parameter. 
+If you have already cloned the repository, skip the first step. 
+The command downloads the latest firmware version from our server and writes it to the board.
+Provide the board stack level as a parameter. 
+For the 64-bit Raspbian, use ``` ./update64 0 ```
 
 ## Warning
-During firmware update we strongly recommend to disconnect all outputs from the board since they can change state unpredictably.
-Please make shure that the I2C port is reseved to the update, meaning no program or script tries to access the I2C port during update.
+During firmware update, we strongly recommend disconnecting all outputs from the board since they can change state unpredictably.
+Please make sure the I2C port is reserved for the update, meaning no program or script tries to access it during the update.
