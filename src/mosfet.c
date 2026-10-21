@@ -25,7 +25,7 @@
 
 #define VERSION_BASE	(int)1
 #define VERSION_MAJOR	(int)1
-#define VERSION_MINOR	(int)1
+#define VERSION_MINOR	(int)2
 
 #define UNUSED(X) (void)X      /* To avoid gcc/g++ warnings */
 #define CMD_ARRAY_SIZE	32
@@ -116,6 +116,12 @@ const CliCmdType CMD_F_READ =
 			"\tUsage:       8mosind <id> frd\n", "",
 			"\tExample:     8mosind 0 frd; Read pwm frequency for all mosfets on Board #0\n"};
 
+static int doMosfetFreqSave(int argc, char *argv[]);
+const CliCmdType CMD_F_SAVE =
+		{"fsv", 2, &doMosfetFreqSave, "\tfsv:         Save pwm frequency to flash\n",
+			"\tUsage:       8mosind <id> fsv\n", "",
+			"\tExample:     8mosind 0 fsv; Save current pwm frequency for all mosfets on Board #0\n"};
+
 static int doTest(int argc, char *argv[]);
 const CliCmdType CMD_TEST =
 	{"test", 2, &doTest,
@@ -159,6 +165,7 @@ char *usage =
 		"         8mosind <id> pwmrd <channel>\n"
 		"         8mosind <id> fwr <[16..1000]>\n"
 		"         8mosind <id> frd\n"
+		"         8mosind <id> fsv\n"
 		"         8mosind <id> test\n"
 		"         8mosind <id> cfg485wr <mode> <baudrate> <stopBits> <parity> <slaveAddr>\n"
 		"         8mosind <id> cfg485rd\n"
@@ -861,6 +868,35 @@ static int doMosfetFreqRd(int argc, char *argv[])
 	return OK;
 }
 
+
+static int doMosfetFreqSave(int argc, char *argv[])
+{
+	int dev = 0;
+	u8 buff = 1;
+
+	dev = doBoardInit(atoi(argv[1]));
+	if (dev <= 0)
+	{
+		return (FAIL);
+	}
+
+	if (argc == 3)
+	{
+		if (OK != i2cMem8Write(dev, I2C_SAVE_FREQ_FLASH_CMD_ADD, &buff, 1))
+		{
+			printf("Fail to save the frequency!");
+			return FAIL;
+		}
+		printf("OK\n");
+	}
+	else
+	{
+		printf("Usage: %s save pwm frequency\n", argv[0]);
+		return (FAIL);
+	}
+	return OK;
+}
+
 static int doHelp(int argc, char *argv[])
 {
 	int i = 0;
@@ -1198,6 +1234,8 @@ static void cliInit(void)
 	memcpy(&gCmdArray[i], &CMD_F_WRITE, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_F_READ, sizeof(CliCmdType));
+	i++;
+		memcpy(&gCmdArray[i], &CMD_F_SAVE, sizeof(CliCmdType));
 	i++;
 	memcpy(&gCmdArray[i], &CMD_TEST, sizeof(CliCmdType));
 	i++;
